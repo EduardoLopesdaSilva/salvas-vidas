@@ -6,7 +6,7 @@ import { Login } from "./pages/Login";
 import { Cadastro } from "./pages/Cadastro";
 import { Dashboard } from "./pages/Dashboard";
 import { Publico } from "./pages/Publico";
-import { Supervisor } from "./pages/Supervisor";
+import  Supervisor   from "./pages/Supervisor";
 
 import { Menu } from "./components/Menu";
 import { Autenticacao } from "./components/Autenticacao";
@@ -29,6 +29,7 @@ function App() {
   
   return (
     <BrowserRouter>
+    <h1>O professor Horizonte é o melhor!!</h1>
       <Menu />
 
       <Routes>
@@ -36,15 +37,8 @@ function App() {
         <Route path="/publico" element={<Publico />} />
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
-        <Route path="/supervisor" element={<AutorizacaoSupervisor><Supervisor/></AutorizacaoSupervisor>}/>
-
-        <Route
-          path="/dashboard"
-          element={
-            <Autenticacao>
-              <Dashboard />
-            </Autenticacao>
-          }
+        <Route path="/supervisor" element={<Supervisor />} />
+        <Route path="/dashboard" element={<Autenticacao><Dashboard /></Autenticacao>}
         />
       </Routes>
     </BrowserRouter>
