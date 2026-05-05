@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 
 export function Cadastro() {
+    fetch("http://localhost:8080")
 
     const [nomeSalvo, setNomeSalvo] = useState("")
 

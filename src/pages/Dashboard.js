@@ -4,6 +4,8 @@ import { criarPostos } from "../utils/Postos";
 
 export function Dashboard() {
 
+    fetch("http://localhost:8080/check/in")
+
     const navigate = useNavigate();
     const [postos, setPostos] = useState([]);
     const [usuario, setUsuario] = useState(null);

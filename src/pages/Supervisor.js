@@ -11,7 +11,7 @@ export function Supervisor() {
         totalLesoes: 0,
         postosOcupados: 0
     });
-
+    fetch("http://localhost:8080")
     useEffect(() => {
 
         const dadosPostos = localStorage.getItem("postos");

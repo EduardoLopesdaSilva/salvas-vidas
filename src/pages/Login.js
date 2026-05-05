@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { GerarToken } from "../utils/GerarToken";
 
 export function Login() {
-
+    fetch("http://localhost:8080/login")
     const navigate = useNavigate();
 
     const [usuario, setUsuario] = useState("");
