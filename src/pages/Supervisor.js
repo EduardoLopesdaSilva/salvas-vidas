@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 
 export function Supervisor() {
-
+    
     const [postos, setPostos] = useState([]);
     const [historico, setHistorico] = useState([]);
+    const [turnoAtual, setTurnoAtual] = useState("");
 
     const [metricas, setMetricas] = useState({
         totalTurnos: 0,
@@ -11,8 +12,8 @@ export function Supervisor() {
         totalLesoes: 0,
         postosOcupados: 0
     });
-    fetch("http://localhost:8080")
-    useEffect(() => {
+
+    const carregarDados = () => {
 
         const dadosPostos = localStorage.getItem("postos");
         const dadosHistorico = localStorage.getItem("historico_turnos");
@@ -25,15 +26,18 @@ export function Supervisor() {
             setPostos(postosArray);
             setHistorico(historicoArray);
 
-            // 🔥 PEGAR DATA DE HOJE
+            // 🔥 TURNO ATUAL
+            const hora = new Date().getHours();
+            const turno = hora < 12 ? "MANHÃ" : "TARDE";
+            setTurnoAtual(turno);
+
+            // 🔥 DATA DE HOJE
             const hoje = new Date().toLocaleDateString("pt-BR");
 
-            // 🔥 FILTRAR SÓ HOJE
             const historicoHoje = historicoArray.filter(t =>
                 t.inicio && t.inicio.includes(hoje)
             );
 
-            // 🔥 MÉTRICAS
             const totalTurnos = historicoHoje.length;
 
             const totalPrevencoes = historicoHoje.reduce(
@@ -55,12 +59,26 @@ export function Supervisor() {
                 postosOcupados
             });
         }
+    };
+
+    useEffect(() => {
+
+        carregarDados();
+
+        // 🔄 ATUALIZA A CADA 5 SEGUNDOS
+        const intervalo = setInterval(() => {
+            carregarDados();
+        }, 5000);
+
+        return () => clearInterval(intervalo);
 
     }, []);
 
     return (
         <div>
             <h1>Painel do Supervisor</h1>
+
+            <h2>Turno Atual: {turnoAtual}</h2>
 
             <hr />
 
@@ -86,6 +104,7 @@ export function Supervisor() {
             {historico.map((h, i) => (
                 <div key={i}>
                     <p>{h.usuario} - Posto {h.posto}</p>
+                    <p>Turno: {h.turno || "N/A"}</p>
                     <p>Início: {h.inicio}</p>
                     <p>Fim: {h.fim}</p>
                     <p>Prevenções: {h.prevencoes}</p>

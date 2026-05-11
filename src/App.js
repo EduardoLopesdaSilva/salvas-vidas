@@ -36,8 +36,8 @@ function App() {
         <Route path="/publico" element={<Publico />} />
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
-        <Route path="/supervisor" element={<AutorizacaoSupervisor><Supervisor/></AutorizacaoSupervisor>}/>
-
+        {/*<Route path="/supervisor" element={<AutorizacaoSupervisor><Supervisor/></AutorizacaoSupervisor>}/>*/}
+        <Route path="/supervisor" element={<Supervisor/>} />
         <Route
           path="/dashboard"
           element={
