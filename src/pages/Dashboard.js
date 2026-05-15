@@ -1,202 +1,97 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { criarPostos } from "../utils/Postos";
 
 export function Dashboard() {
 
     fetch("http://localhost:8080/check/in")
 
     const navigate = useNavigate();
-    const [postos, setPostos] = useState([]);
+
     const [usuario, setUsuario] = useState(null);
-    const [turno, setTurno] = useState(null);
+    const [postos, setPostos] = useState([]);
     const [postoSelecionado, setPostoSelecionado] = useState(null);
-    const [historico, setHistorico] = useState([]);
 
-    const logout = () => {
-        localStorage.removeItem("token");
-        navigate("/");
-    };
-
-    // 🔹 Carregar usuário e turno
+    // 🔹 carregar usuário
     useEffect(() => {
+        const id = localStorage.getItem("usuario_id");
 
-        const token = localStorage.getItem("token");
-
-        if (!token) {
+        if (!id) {
             navigate("/login");
             return;
         }
-        // 🔹 Criar postos se não existirem
-        
-        if (!localStorage.getItem("postos")) {
-        criarPostos();
-}
-        const dadosPostos = localStorage.getItem("postos");
 
-        if (dadosPostos) {
-            setPostos(JSON.parse(dadosPostos));
-        }
-
-        const dadosUsuario = localStorage.getItem("usuario_salva_vidas");
-        const dadosTurno = localStorage.getItem("turno_usuario");
-
-        if (dadosUsuario) setUsuario(JSON.parse(dadosUsuario));
-        if (dadosTurno) setTurno(JSON.parse(dadosTurno));
-
+        fetch(`http://localhost:8080/usuarios/${id}`)
+            .then(res => res.json())
+            .then(data => setUsuario(data));
     }, []);
 
-    //Mostrar Historico
-
-    const dadosHistorico = localStorage.getItem("historico_turnos");
-
-        if (dadosHistorico) {
-            setHistorico(JSON.parse(dadosHistorico));
-        }
-
-    // 🔹 Check-in
-    const iniciarTurno = () => {
-        const novoTurno = {
-            ativo: true,
-            inicio: new Date().toLocaleTimeString(),
-            fim: null,
-            prevencoes: 0,
-            lesoes: []
-        };
-
-        localStorage.setItem("turno_usuario", JSON.stringify(novoTurno));
-        setTurno(novoTurno);
+    // 🔹 carregar postos
+    const carregarPostos = () => {
+        fetch("http://localhost:8080/postos")
+            .then(res => res.json())
+            .then(data => setPostos(data));
     };
 
-    // 🔹 Prevenção
-    const adicionarPrevencao = () => {
-        const novoTurno = {
-            ...turno,
-            prevencoes: turno.prevencoes + 1
-        };
+    useEffect(() => {
+        carregarPostos();
+    }, []);
 
-        localStorage.setItem("turno_usuario", JSON.stringify(novoTurno));
-        setTurno(novoTurno);
-    };
+    // 🔥 CHECK-IN
+    const iniciarTurno = async () => {
 
-    // 🔹 Lesão
-    const registrarLesao = () => {
-        const descricao = prompt("Descreva a ocorrência:");
+        const idUsuario = localStorage.getItem("usuario_id");
 
-        if (!descricao) return;
-
-        const novaLesao = {
-            descricao,
-            horario: new Date().toLocaleTimeString()
-        };
-
-        const novoTurno = {
-            ...turno,
-            lesoes: [...turno.lesoes, novaLesao]
-        };
-
-        localStorage.setItem("turno_usuario", JSON.stringify(novoTurno));
-        setTurno(novoTurno);
-    };
-
-    // 🔹 Check-out
-    const finalizarTurno = () => {
-
-        if (turno.prevencoes === 0 && turno.lesoes.length === 0) {
-            alert("Registre pelo menos uma atividade!");
+        if (!postoSelecionado) {
+            alert("Escolha um posto");
             return;
         }
 
-        const turnoFinal = {
-            ...turno,
-            ativo: false,
-            fim: new Date().toLocaleString("pt-BR"),
-            inicio: new Date().toLocaleString("pt-BR")
-        };
+        try {
+            await fetch(`http://localhost:8080/check/in?idUsuario=${idUsuario}&postoId=${postoSelecionado}&foto=teste`, {
+                method: "POST"
+            });
 
-        // 🔥 LIBERAR O POSTO
-        const novosPostos = postos.map(p => {
-            if (p.id === postoSelecionado) {
-                return {
-                    ...p,
-                    status: "LIVRE",
-                    salvaVida: null
-                };
-            }
-            return p;
-        });
+            alert("Turno iniciado!");
+            setPostoSelecionado(null);
 
-        // salvar tudo
-        localStorage.setItem("postos", JSON.stringify(novosPostos));
-        localStorage.setItem("turno_usuario", JSON.stringify(turnoFinal));
+            carregarPostos(); // 🔄 atualiza status
 
-        // atualizar tela
-        setPostos(novosPostos);
-        setTurno(turnoFinal);
-        setPostoSelecionado(null);
-
-        // 🔥 SALVAR HISTÓRICO
-        const historico = JSON.parse(localStorage.getItem("historico_turnos")) || [];
-
-        const novoRegistro = {
-            usuario: usuario.nome,
-            posto: postoSelecionado,
-            inicio: turno.inicio,
-            fim: turnoFinal.fim,
-            prevencoes: turno.prevencoes,
-            lesoes: turno.lesoes
-        };
-
-        historico.push(novoRegistro);
-
-        localStorage.setItem("historico_turnos", JSON.stringify(historico));
-
-                alert("Turno finalizado e posto liberado!");
-            };
-
-    //Assumir posto
-
-    const assumirPosto = (id) => {
-
-        if (postoSelecionado) {
-        alert("Você já está em um posto!");
-        return;
-    }
-
-    const novosPostos = postos.map(p => {
-        if (p.id === id && p.status === "LIVRE") {
-            return {
-                ...p,
-                status: "OCUPADO",
-                salvaVida: usuario.nome
-            };
+        } catch {
+            alert("Erro ao iniciar turno");
         }
-        return p;
-    });
+    };
 
-    localStorage.setItem("postos", JSON.stringify(novosPostos));
-    setPostos(novosPostos);
-    setPostoSelecionado(id);
-};
+    // 🔥 CHECK-OUT
+    const finalizarTurno = async () => {
 
+        if (!postoSelecionado) {
+            alert("Nenhum posto selecionado");
+            return;
+        }
 
-    //Return
+        try {
+            await fetch(`http://localhost:8080/checkout/out?postoId=${postoSelecionado}&foto=teste&prevencoes=0&lesoes=0&queimaduras=0`, {
+                method: "POST"
+            });
+
+            alert("Turno finalizado!");
+            setPostoSelecionado(null);
+
+            carregarPostos(); // 🔄 atualiza status
+
+        } catch {
+            alert("Erro ao finalizar turno");
+        }
+    };
+
+    if (!usuario) return <h1>Carregando...</h1>;
 
     return (
         <div>
             <h1>Dashboard</h1>
-
-            {postoSelecionado && (
-            <h3>Você está no Posto {postoSelecionado}</h3>
-            )}
-
-            <h3>Bem-vindo, {usuario.nome}</h3>
+            <h3>Bem-vindo, {usuario.email}</h3>
 
             <hr />
-
-            {!turno?.ativo && (
-                <button onClick={iniciarTurno}>Iniciar Turno</button>
-            )}
 
             <h2>Postos</h2>
 
@@ -204,56 +99,21 @@ export function Dashboard() {
                 <div key={p.id}>
                     {p.nome} - {p.status}
 
-                {p.status === "LIVRE" && !postoSelecionado && (
-                <button onClick={() => assumirPosto(p.id)}>Assumir</button>
-            )}
-
-                    {p.status === "OCUPADO" && (
-                        <span> (Ocupado por {p.salvaVida})</span>
+                    {p.status === "LIVRE" && (
+                        <button onClick={() => setPostoSelecionado(p.id)}>
+                            Selecionar
+                        </button>
                     )}
                 </div>
             ))}
 
-            {turno?.ativo && (
-                <>
-                    <p>Início: {turno.inicio}</p>
-
-                    <h2>Prevenções: {turno.prevencoes}</h2>
-                    <button onClick={adicionarPrevencao}>+1 Prevenção</button>
-
-                    <h2>Lesões</h2>
-                    <button onClick={registrarLesao}>Registrar</button>
-
-                    <ul>
-                        {turno.lesoes.map((l, i) => (
-                            <li key={i}>
-                                {l.descricao} - {l.horario}
-                            </li>
-                        ))}
-                    </ul>
-
-                    <button onClick={finalizarTurno}>Encerrar Turno</button>
-                </>
-            )}
-
-            <h2>Histórico de Turnos</h2>
-
-            {historico.map((h, i) => (
-                <div key={i}>
-                    <p>{h.usuario} - Posto {h.posto}</p>
-
-                    <p>Início: {h.inicio}</p>
-
-                    <p>Fim: {h.fim}</p>
-
-                    <p>Prevenções: {h.prevencoes}</p>
-
-                    <hr/>
-                </div>
-            ))}
-
             <hr />
-            <button onClick={logout}>Logout</button>
+
+            <p>Posto selecionado: {postoSelecionado}</p>
+
+            <button onClick={iniciarTurno}>Iniciar Turno</button>
+
+            <button onClick={finalizarTurno}>Finalizar Turno</button>
         </div>
     );
 }

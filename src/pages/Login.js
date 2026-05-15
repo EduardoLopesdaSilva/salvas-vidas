@@ -1,56 +1,83 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { GerarToken } from "../utils/GerarToken";
 
 export function Login() {
-    fetch("http://localhost:8080/login")
+
     const navigate = useNavigate();
 
     const [usuario, setUsuario] = useState("");
     const [senha, setSenha] = useState("");
 
-    const fazerLogin = (e) => {
+    const fazerLogin = async (e) => {
         e.preventDefault();
 
-        const dados = localStorage.getItem('usuario_salva_vidas');
+        try {
 
-        if (!dados) {
-            alert("Nenhum usuário cadastrado");
-            return;
-        }
+            const resposta = await fetch("http://localhost:8080/auth/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email: usuario,
+                    senha: senha
+                })
+            });
 
-        const usuario = JSON.parse(dados);
+            if (resposta.ok) {
 
-        if (usuario === usuario.usuario && senha === usuario.senha) {
+                // backend retorna TOKEN
+                const token = await resposta.text();
 
-            const token = GerarToken(); // 🔥 agora usando corretamente
-            localStorage.setItem('token', token);
+                localStorage.setItem("token", token);
 
-            alert("Login realizado com sucesso!");
-            navigate("/dashboard");
+                alert("Login realizado!");
 
-        } else {
-            alert("Nome ou senha incorretos");
+                navigate("/supervisor");
+
+            } else {
+                alert("Email ou senha inválidos");
+            }
+
+        } catch (erro) {
+
+            console.log(erro);
+
+            alert("Erro no servidor");
         }
     };
 
     return (
         <div>
+
             <h1>Login</h1>
 
-            <input
-                type="text"
-                placeholder="usuario"
-                onChange={(e) => setUsuario(e.target.value)}
-            />
+            <form onSubmit={fazerLogin}>
 
-            <input
-                type="password"
-                placeholder="Senha"
-                onChange={(e) => setSenha(e.target.value)}
-            />
+                <input
+                    type="email"
+                    placeholder="Email"
+                    value={usuario}
+                    onChange={(e) => setUsuario(e.target.value)}
+                />
 
-            <button onClick={fazerLogin}>Entrar</button>
+                <br /><br />
+
+                <input
+                    type="password"
+                    placeholder="Senha"
+                    value={senha}
+                    onChange={(e) => setSenha(e.target.value)}
+                />
+
+                <br /><br />
+
+                <button type="submit">
+                    Entrar
+                </button>
+
+            </form>
+
         </div>
     );
 }

@@ -9,7 +9,7 @@ export function Cadastro() {
         nome: "",
         senha: "",
         posto: "",
-        funcao: "salva-vidas"
+        funcao: ""
     })
 
     const handleChange = (e) => {
