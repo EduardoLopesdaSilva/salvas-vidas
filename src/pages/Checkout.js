@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiRequest } from "../services/api";
 
 export default function Checkout() {
 
@@ -9,34 +10,35 @@ export default function Checkout() {
 
     const [turno, setTurno] = useState({
         prevencoes: 0,
-        lesoes: []
+        lesoes: 0,
+        queimaduras: 0
     });
+    const [erro, setErro] = useState("");
 
     const finalizarTurno = async () => {
+        setErro("");
+
+        if (!postoSelecionado) {
+            setErro("Selecione um posto");
+            return;
+        }
 
         try {
-
-            await fetch("http://localhost:8080/checkout/out", {
+            await apiRequest("/checkout/out", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    postoId: postoSelecionado,
+                body: {
+                    postoId: Number(postoSelecionado),
                     foto: "foto_final",
                     prevencoes: turno.prevencoes.toString(),
-                    lesoes: JSON.stringify(turno.lesoes),
-                    queimaduras: "0"
-                })
+                    lesoes: turno.lesoes.toString(),
+                    queimaduras: turno.queimaduras.toString()
+                }
             });
 
             alert("Turno finalizado!");
-
-            navigate("/supervisor");
-
-        } catch {
-
-            alert("Erro no checkout");
+            navigate("/dashboard");
+        } catch (error) {
+            setErro(error.message || "Erro no checkout");
         }
     };
 
@@ -46,11 +48,13 @@ export default function Checkout() {
             <h1>Checkout</h1>
 
             <select
+                value={postoSelecionado}
                 onChange={(e) => setPostoSelecionado(e.target.value)}
             >
-                <option>Selecione um posto</option>
+                <option value="">Selecione um posto</option>
                 <option value="1">Posto 1</option>
                 <option value="2">Posto 2</option>
+                <option value="3">Posto 3</option>
             </select>
 
             <input
@@ -63,6 +67,30 @@ export default function Checkout() {
                     })
                 }
             />
+
+            <input
+                type="number"
+                placeholder="Lesões"
+                onChange={(e) =>
+                    setTurno({
+                        ...turno,
+                        lesoes: e.target.value
+                    })
+                }
+            />
+
+            <input
+                type="number"
+                placeholder="Queimaduras"
+                onChange={(e) =>
+                    setTurno({
+                        ...turno,
+                        queimaduras: e.target.value
+                    })
+                }
+            />
+
+            {erro && <p>{erro}</p>}
 
             <button onClick={finalizarTurno}>
                 Finalizar Turno

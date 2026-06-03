@@ -1,32 +1,55 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { cpfBasicoValido, limparCpf, useAuth } from '../context/AuthContext';
 
 export function Cadastro() {
-    fetch("http://localhost:8080")
+    const navigate = useNavigate();
+    const { register } = useAuth();
 
     const [nomeSalvo, setNomeSalvo] = useState("")
+    const [erro, setErro] = useState("")
+    const [carregando, setCarregando] = useState(false)
 
     const [formulario, setFormulario] = useState({
         nome: "",
-        senha: "",
-        posto: "",
-        funcao: ""
+        cpf: ""
     })
 
     const handleChange = (e) => {
-        setFormulario({ ...formulario, [e.target.name]: e.target.value })
+        const valor = e.target.name === "cpf" ? limparCpf(e.target.value) : e.target.value
+        setFormulario({ ...formulario, [e.target.name]: valor })
     }
 
-    const salvarUsuario = () => {
+    const salvarUsuario = async (e) => {
+        e.preventDefault()
+        setErro("")
 
-        if (!formulario.nome || !formulario.senha) {
-            alert("Preencha nome e senha!")
+        if (!formulario.nome.trim() || !formulario.cpf) {
+            setErro("Preencha nome completo e CPF")
             return
         }
 
-        localStorage.setItem('usuario_salva_vidas', JSON.stringify(formulario))
+        if (!cpfBasicoValido(formulario.cpf)) {
+            setErro("Informe um CPF válido com 11 números")
+            return
+        }
 
-        alert("Cadastro realizado com sucesso!")
-        setNomeSalvo(formulario.nome)
+        try {
+            setCarregando(true)
+
+            await register({
+                nome: formulario.nome.trim(),
+                cpf: formulario.cpf,
+                nivelAcesso: "OCUPADO"
+            })
+
+            setNomeSalvo(formulario.nome.trim())
+            navigate("/login")
+        } catch (error) {
+            setErro(error.message || "Erro ao cadastrar usuário")
+        } finally {
+            setCarregando(false)
+        }
     }
 
     const removerUsuario = () => {
@@ -40,7 +63,7 @@ export function Cadastro() {
 
         if (dados) {
             const usuario = JSON.parse(dados)
-            setNomeSalvo(usuario.nome)
+            setNomeSalvo(usuario.nome || usuario.cpf || usuario.email)
         }
     }, [])
 
@@ -48,39 +71,39 @@ export function Cadastro() {
         <div>
             <h1>Cadastro</h1>
 
-            <input
-                type='text'
-                name='usuario'
-                placeholder='usuario'
-                onChange={handleChange}
-            />
+            <form onSubmit={salvarUsuario}>
+                <input
+                    type='text'
+                    name='nome'
+                    placeholder='Nome completo'
+                    value={formulario.nome}
+                    onChange={handleChange}
+                    required
+                />
 
-            <input
-                type='password'
-                name='password'
-                placeholder='Senha'
-                onChange={handleChange}
-            />
+                <input
+                    type='text'
+                    inputMode='numeric'
+                    name='cpf'
+                    maxLength='11'
+                    placeholder='CPF'
+                    value={formulario.cpf}
+                    onChange={handleChange}
+                    required
+                />
 
-            <input
-                type='text'
-                name='posto'
-                placeholder='Posto'
-                onChange={handleChange}
-            />
+                <br /><br />
 
-            <select name="funcao" onChange={handleChange}>
-                <option value="salva-vidas">Salva-vidas</option>
-                <option value="supervisor">Supervisor</option>
-            </select>
+                {erro && <p>{erro}</p>}
 
-            <br /><br />
-
-            <button onClick={salvarUsuario}>Cadastrar</button>
-            <button onClick={removerUsuario}>Limpar</button>
+                <button type="submit" disabled={carregando}>
+                    {carregando ? "Cadastrando..." : "Cadastrar"}
+                </button>
+                <button type="button" onClick={removerUsuario}>Limpar</button>
+            </form>
 
             {nomeSalvo && (
-                <p>Bem-vindo, {nomeSalvo}</p>
+                <p>Cadastro salvo para {nomeSalvo}. A senha inicial e formada pelos 3 primeiros numeros do CPF.</p>
             )}
         </div>
     )

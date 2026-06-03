@@ -1,18 +1,15 @@
 import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export function AutorizacaoSupervisor({ children }) {
+    const { isAuthenticated, isSupervisor } = useAuth();
 
-    const dados = localStorage.getItem("usuario_salva_vidas");
-
-    if (!dados) {
-        return <Navigate to="/login" />;
+    if (!isAuthenticated) {
+        return <Navigate to="/login" replace />;
     }
 
-    const usuario = JSON.parse(dados);
-
-    if (usuario.funcao !== "supervisor") {
-        alert("Acesso permitido apenas para supervisores");
-        return <Navigate to="/dashboard" />;
+    if (!isSupervisor) {
+        return <Navigate to="/dashboard" replace />;
     }
 
     return children;

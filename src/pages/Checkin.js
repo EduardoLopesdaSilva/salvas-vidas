@@ -1,54 +1,45 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiRequest } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 export default function Checkin() {
 
     const navigate = useNavigate();
+    const { user } = useAuth();
 
+    const [postos, setPostos] = useState([]);
     const [postoSelecionado, setPostoSelecionado] = useState(null);
+    const [erro, setErro] = useState("");
 
-    // ✅ Apenas verifica login
     useEffect(() => {
+        apiRequest("/postos")
+            .then(setPostos)
+            .catch(error => setErro(error.message));
+    }, []);
 
-        const id = localStorage.getItem("usuario_id");
-
-        if (!id) {
-            navigate("/login");
-        }
-
-    }, [navigate]);
-
-    // ✅ Função FORA do useEffect
     const iniciarTurno = async () => {
-
-        const idUsuario = localStorage.getItem("usuario_id");
+        setErro("");
 
         if (!postoSelecionado) {
-            alert("Escolha um posto");
+            setErro("Escolha um posto");
             return;
         }
 
         try {
-
-            await fetch("http://localhost:8080/check/in", {
+            await apiRequest("/check/in", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    idUsuario: Number(idUsuario),
-                    postoId: postoSelecionado,
-                    foto: "foto_teste"
-                })
+                body: {
+                    idUsuario: user.id,
+                    postoId: Number(postoSelecionado),
+                    foto: "sem_foto"
+                }
             });
 
             alert("Check-in realizado!");
-
-            navigate("/supervisor");
-
-        } catch {
-
-            alert("Erro no check-in");
+            navigate("/dashboard");
+        } catch (error) {
+            setErro(error.message || "Erro no check-in");
         }
     };
 
@@ -59,13 +50,20 @@ export default function Checkin() {
 
             <select
                 onChange={e => setPostoSelecionado(e.target.value)}
+                value={postoSelecionado || ""}
             >
                 <option value="">Selecione um posto</option>
 
-                <option value="1">Posto 1</option>
-                <option value="2">Posto 2</option>
-                <option value="3">Posto 3</option>
+                {postos
+                    .filter(posto => posto.status === "LIVRE")
+                    .map(posto => (
+                        <option key={posto.id} value={posto.id}>
+                            {posto.nome}
+                        </option>
+                    ))}
             </select>
+
+            {erro && <p>{erro}</p>}
 
             <button onClick={iniciarTurno}>
                 Iniciar Turno

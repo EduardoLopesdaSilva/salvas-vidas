@@ -1,9 +1,12 @@
 import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export function Autenticacao({children}){
-    const estaLogado = localStorage.getItem("token")
-    if(!estaLogado){
-        return <Navigate to="/"/>
+    const { isAuthenticated } = useAuth();
+
+    if(!isAuthenticated){
+        return <Navigate to="/login" replace />
     }
+
     return children
 }

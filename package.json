@@ -37,4 +37,7 @@
       "last 1 safari version"
     ]
   }
+  ,"overrides": {
+    "negotiator": "0.6.4"
+  }
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { apiRequest } from "../services/api";
 
 export default function Supervisor() {
     
@@ -11,19 +12,19 @@ export default function Supervisor() {
         totalLesoes: 0,
         postosOcupados: 0
     });
+    const [erro, setErro] = useState("");
 
     const carregarPostos = async () => {
-
-        const res = await fetch("http://localhost:8080/postos");
-
-        const data = await res.json();
-
+        const data = await apiRequest("/postos");
         setPostos(data);
+        setMetricas(metricasAtuais => ({
+            ...metricasAtuais,
+            postosOcupados: data.filter(posto => posto.status === "OCUPADO").length
+        }));
     };
 
     useEffect(() => {
-
-        carregarPostos();
+        carregarPostos().catch(error => setErro(error.message));
 
         const dadosPostos = localStorage.getItem("postos");
 
@@ -73,6 +74,7 @@ export default function Supervisor() {
         <div>
 
             <h1>Painel do Supervisor</h1>
+            {erro && <p>{erro}</p>}
 
             <hr />
 

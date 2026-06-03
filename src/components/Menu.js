@@ -1,20 +1,22 @@
 import { Link } from "react-router-dom"
+import { useAuth } from "../context/AuthContext";
 
 
 export function Menu() {
 
-    const dados = localStorage.getItem("usuario_salva_vidas");
-    const usuario = dados ? JSON.parse(dados) : null;
+    const { isAuthenticated, isSupervisor, logout, user } = useAuth();
 
     return (
         <nav>
             <Link to="/">Home</Link>
-            <Link to="/cadastro">Cadastrar</Link>
-            <Link to="/login">Logar</Link>
-            <Link to="/dashboard">Dashboard</Link>
-            <Link to="/supervisor">Supervisor</Link>
-            
-            {usuario?.funcao === "supervisor" && (<Link to="/supervisor">Supervisor</Link>)}
+            {!isAuthenticated && <Link to="/login">Login</Link>}
+            {isAuthenticated && <Link to="/dashboard">Dashboard</Link>}
+            {isAuthenticated && <Link to="/checkin">Check-in</Link>}
+            {isAuthenticated && <Link to="/checkout">Checkout</Link>}
+            {isSupervisor && <Link to="/supervisor">Supervisor</Link>}
+            {isSupervisor && <Link to="/gerenciamento-guarda-vidas">Gerenciar Guarda-Vidas</Link>}
+            {isSupervisor && <span>{user.nome || user.cpf}</span>}
+            {isAuthenticated && <button onClick={logout}>Sair</button>}
 
         </nav>
     )
