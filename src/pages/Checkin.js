@@ -44,31 +44,55 @@ export default function Checkin() {
     };
 
     return (
-        <div>
+        <main className="app-shell page">
+            <header className="page-header">
+                <div>
+                    <p className="page-kicker">Operacao</p>
+                    <h1>Iniciar turno</h1>
+                    <p className="page-description">Selecione o posto livre e confirme o inicio da atividade.</p>
+                </div>
+            </header>
 
-            <h1>Check-in</h1>
+            <section className="content-grid">
+                <div className="card span-6">
+                    <div className="form-grid">
+                        <div className="field">
+                            <label htmlFor="posto-checkin">Posto de atuacao</label>
+                            <select
+                                id="posto-checkin"
+                                className="select"
+                                onChange={e => setPostoSelecionado(e.target.value)}
+                                value={postoSelecionado || ""}
+                            >
+                                <option value="">Selecione um posto</option>
 
-            <select
-                onChange={e => setPostoSelecionado(e.target.value)}
-                value={postoSelecionado || ""}
-            >
-                <option value="">Selecione um posto</option>
+                                {postos
+                                    .filter(posto => posto.status === "LIVRE")
+                                    .map(posto => (
+                                        <option key={posto.id} value={posto.id}>
+                                            {posto.nome}
+                                        </option>
+                                    ))}
+                            </select>
+                        </div>
 
-                {postos
-                    .filter(posto => posto.status === "LIVRE")
-                    .map(posto => (
-                        <option key={posto.id} value={posto.id}>
-                            {posto.nome}
-                        </option>
-                    ))}
-            </select>
+                        {erro && <div className="alert alert-error">{erro}</div>}
 
-            {erro && <p>{erro}</p>}
+                        <button className="btn btn-primary btn-wide" onClick={iniciarTurno}>
+                            Iniciar turno
+                        </button>
+                    </div>
+                </div>
 
-            <button onClick={iniciarTurno}>
-                Iniciar Turno
-            </button>
-
-        </div>
+                <aside className="card span-6">
+                    <h2>Antes de iniciar</h2>
+                    <div className="list">
+                        <div className="list-item"><strong>Confira o posto selecionado</strong></div>
+                        <div className="list-item"><strong>Mantenha seus dados atualizados</strong></div>
+                        <div className="list-item"><strong>Registre ocorrencias ao longo do turno</strong></div>
+                    </div>
+                </aside>
+            </section>
+        </main>
     );
 }

@@ -1,23 +1,69 @@
-import { Link } from "react-router-dom"
+import { NavLink } from "react-router-dom"
 import { useAuth } from "../context/AuthContext";
 
 
 export function Menu() {
 
     const { isAuthenticated, isSupervisor, logout, user } = useAuth();
+    const nomeUsuario = user?.nome || user?.cpf || "Usuario";
+    const perfil = isSupervisor ? "Sargento" : "Guarda-Vidas";
 
     return (
-        <nav>
-            <Link to="/">Home</Link>
-            {!isAuthenticated && <Link to="/login">Login</Link>}
-            {isAuthenticated && <Link to="/dashboard">Dashboard</Link>}
-            {isAuthenticated && <Link to="/checkin">Check-in</Link>}
-            {isAuthenticated && <Link to="/checkout">Checkout</Link>}
-            {isSupervisor && <Link to="/supervisor">Supervisor</Link>}
-            {isSupervisor && <Link to="/gerenciamento-guarda-vidas">Gerenciar Guarda-Vidas</Link>}
-            {isSupervisor && <span>{user.nome || user.cpf}</span>}
-            {isAuthenticated && <button onClick={logout}>Sair</button>}
+        <>
+            <header className="app-header">
+                <NavLink to={isAuthenticated ? "/dashboard" : "/"} className="brand" aria-label="Pagina inicial">
+                    <span className="brand-mark">CB</span>
+                    <span className="brand-title">
+                        <strong>Sistema de Gestao para Salva-Vidas</strong>
+                        <span>Corpo de Bombeiros Militar de Santa Catarina</span>
+                    </span>
+                </NavLink>
 
-        </nav>
+                {isAuthenticated && (
+                    <div className="header-user" aria-label="Usuario conectado">
+                        <strong>{nomeUsuario}</strong>
+                        <span>{perfil}</span>
+                    </div>
+                )}
+            </header>
+
+            {isAuthenticated && (
+                <aside className="sidebar" aria-label="Menu principal">
+                    <div className="sidebar-group">Operacao</div>
+                    <nav className="sidebar-nav">
+                        <NavLink to="/dashboard" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
+                            <span className="nav-icon">OP</span>
+                            Painel
+                        </NavLink>
+                        <NavLink to="/checkin" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
+                            <span className="nav-icon">IN</span>
+                            Iniciar turno
+                        </NavLink>
+                        <NavLink to="/checkout" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
+                            <span className="nav-icon">OUT</span>
+                            Finalizar turno
+                        </NavLink>
+
+                        {isSupervisor && (
+                            <>
+                                <div className="sidebar-group">Supervisao</div>
+                                <NavLink to="/supervisor" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
+                                    <span className="nav-icon">SG</span>
+                                    Painel do Sargento
+                                </NavLink>
+                                <NavLink to="/gerenciamento-guarda-vidas" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
+                                    <span className="nav-icon">GV</span>
+                                    Guarda-Vidas
+                                </NavLink>
+                            </>
+                        )}
+
+                        <button className="logout-button" onClick={logout}>
+                            Sair do sistema
+                        </button>
+                    </nav>
+                </aside>
+            )}
+        </>
     )
 }

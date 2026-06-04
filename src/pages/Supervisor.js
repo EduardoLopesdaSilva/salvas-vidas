@@ -71,54 +71,85 @@ export default function Supervisor() {
     }, []);
 
     return (
-        <div>
-
-            <h1>Painel do Supervisor</h1>
-            {erro && <p>{erro}</p>}
-
-            <hr />
-
-            <h2>Métricas de Hoje</h2>
-
-            <p>Total de Turnos: {metricas.totalTurnos}</p>
-
-            <p>Total de Prevenções: {metricas.totalPrevencoes}</p>
-
-            <p>Total de Lesões: {metricas.totalLesoes}</p>
-
-            <p>Postos Ocupados Agora: {metricas.postosOcupados}</p>
-
-            <hr />
-
-            <h2>Postos</h2>
-
-            {postos.map(p => (
-                <div key={p.id}>
-                    {p.nome} - {p.status}
-                    {p.salvaVida && <span> ({p.salvaVida})</span>}
+        <main className="app-shell page">
+            <header className="page-header">
+                <div>
+                    <p className="page-kicker">Supervisao</p>
+                    <h1>Painel do Sargento</h1>
+                    <p className="page-description">
+                        Visao consolidada dos postos, turnos e indicadores operacionais do dia.
+                    </p>
                 </div>
-            ))}
+            </header>
 
-            <hr />
+            <section className="content-grid">
+                {erro && <div className="alert alert-error span-12">{erro}</div>}
 
-            <h2>Histórico</h2>
-
-            {historico.map((h, i) => (
-                <div key={i}>
-
-                    <p>{h.usuario} - Posto {h.posto}</p>
-
-                    <p>Início: {h.inicio}</p>
-
-                    <p>Fim: {h.fim}</p>
-
-                    <p>Prevenções: {h.prevencoes}</p>
-
-                    <hr />
-
+                <div className="card stat-card span-4">
+                    <p className="stat-label">Turnos de hoje</p>
+                    <p className="stat-value">{metricas.totalTurnos}</p>
                 </div>
-            ))}
+                <div className="card stat-card span-4">
+                    <p className="stat-label">Prevencoes</p>
+                    <p className="stat-value">{metricas.totalPrevencoes}</p>
+                </div>
+                <div className="card stat-card span-4">
+                    <p className="stat-label">Lesoes</p>
+                    <p className="stat-value">{metricas.totalLesoes}</p>
+                </div>
+                <div className="card stat-card span-4">
+                    <p className="stat-label">Postos ocupados</p>
+                    <p className="stat-value">{metricas.postosOcupados}</p>
+                </div>
 
-        </div>
+                <section className="card span-7">
+                    <div className="section-title">
+                        <h2>Postos monitorados</h2>
+                    </div>
+
+                    {postos.length === 0 ? (
+                        <div className="empty-state">Nenhum posto encontrado.</div>
+                    ) : (
+                        <div className="list">
+                            {postos.map(p => (
+                                <div className="list-item" key={p.id}>
+                                    <div>
+                                        <strong>{p.nome}</strong>
+                                        {p.salvaVida && <div className="page-description">{p.salvaVida}</div>}
+                                    </div>
+                                    <span className={`badge ${p.status === "OCUPADO" ? "badge-busy" : "badge-free"}`}>
+                                        {p.status === "OCUPADO" ? "Ocupado" : "Livre"}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </section>
+
+                <section className="card span-5">
+                    <div className="section-title">
+                        <h2>Historico recente</h2>
+                    </div>
+
+                    {historico.length === 0 ? (
+                        <div className="empty-state">Nenhum registro no historico local.</div>
+                    ) : (
+                        <div className="list">
+                            {historico.map((h, i) => (
+                                <div className="list-item" key={i}>
+                                    <div>
+                                        <strong>{h.usuario} - Posto {h.posto}</strong>
+                                        <div className="page-description">
+                                            Inicio: {h.inicio || "-"} | Fim: {h.fim || "-"}
+                                        </div>
+                                    </div>
+                                    <span className="badge badge-busy">{h.prevencoes || 0} prev.</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </section>
+            </section>
+        </main>
     );
 }

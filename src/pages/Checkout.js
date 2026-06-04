@@ -43,59 +43,110 @@ export default function Checkout() {
     };
 
     return (
-        <div>
+        <main className="app-shell page">
+            <header className="page-header">
+                <div>
+                    <p className="page-kicker">Operacao</p>
+                    <h1>Finalizar turno</h1>
+                    <p className="page-description">Informe os numeros do atendimento e encerre a atividade do posto.</p>
+                </div>
+            </header>
 
-            <h1>Checkout</h1>
+            <section className="content-grid">
+                <div className="card span-7">
+                    <div className="form-grid">
+                        <div className="field">
+                            <label htmlFor="posto-checkout">Posto</label>
+                            <select
+                                id="posto-checkout"
+                                className="select"
+                                value={postoSelecionado}
+                                onChange={(e) => setPostoSelecionado(e.target.value)}
+                            >
+                                <option value="">Selecione um posto</option>
+                                <option value="1">Posto 1</option>
+                                <option value="2">Posto 2</option>
+                                <option value="3">Posto 3</option>
+                            </select>
+                        </div>
 
-            <select
-                value={postoSelecionado}
-                onChange={(e) => setPostoSelecionado(e.target.value)}
-            >
-                <option value="">Selecione um posto</option>
-                <option value="1">Posto 1</option>
-                <option value="2">Posto 2</option>
-                <option value="3">Posto 3</option>
-            </select>
+                        <div className="field">
+                            <label htmlFor="prevencoes-checkout">Prevencoes</label>
+                            <input
+                                id="prevencoes-checkout"
+                                className="input"
+                                type="number"
+                                min="0"
+                                value={turno.prevencoes}
+                                onChange={(e) =>
+                                    setTurno({
+                                        ...turno,
+                                        prevencoes: e.target.value
+                                    })
+                                }
+                            />
+                        </div>
 
-            <input
-                type="number"
-                placeholder="Prevenções"
-                onChange={(e) =>
-                    setTurno({
-                        ...turno,
-                        prevencoes: e.target.value
-                    })
-                }
-            />
+                        <div className="field">
+                            <label htmlFor="lesoes-checkout">Lesoes</label>
+                            <input
+                                id="lesoes-checkout"
+                                className="input"
+                                type="number"
+                                min="0"
+                                value={turno.lesoes}
+                                onChange={(e) =>
+                                    setTurno({
+                                        ...turno,
+                                        lesoes: e.target.value
+                                    })
+                                }
+                            />
+                        </div>
 
-            <input
-                type="number"
-                placeholder="Lesões"
-                onChange={(e) =>
-                    setTurno({
-                        ...turno,
-                        lesoes: e.target.value
-                    })
-                }
-            />
+                        <div className="field">
+                            <label htmlFor="queimaduras-checkout">Queimaduras</label>
+                            <input
+                                id="queimaduras-checkout"
+                                className="input"
+                                type="number"
+                                min="0"
+                                value={turno.queimaduras}
+                                onChange={(e) =>
+                                    setTurno({
+                                        ...turno,
+                                        queimaduras: e.target.value
+                                    })
+                                }
+                            />
+                        </div>
 
-            <input
-                type="number"
-                placeholder="Queimaduras"
-                onChange={(e) =>
-                    setTurno({
-                        ...turno,
-                        queimaduras: e.target.value
-                    })
-                }
-            />
+                        {erro && <div className="alert alert-error">{erro}</div>}
 
-            {erro && <p>{erro}</p>}
+                        <button className="btn btn-primary btn-wide" onClick={finalizarTurno}>
+                            Finalizar turno
+                        </button>
+                    </div>
+                </div>
 
-            <button onClick={finalizarTurno}>
-                Finalizar Turno
-            </button>
-
-        </div>
+                <aside className="card span-5">
+                    <h2>Conferencia</h2>
+                    <div className="list">
+                        <div className="list-item">
+                            <strong>Prevencoes</strong>
+                            <span className="badge badge-busy">{turno.prevencoes || 0}</span>
+                        </div>
+                        <div className="list-item">
+                            <strong>Lesoes</strong>
+                            <span className="badge badge-alert">{turno.lesoes || 0}</span>
+                        </div>
+                        <div className="list-item">
+                            <strong>Queimaduras</strong>
+                            <span className="badge badge-alert">{turno.queimaduras || 0}</span>
+                        </div>
+                    </div>
+                </aside>
+            </section>
+        </main>
     );
 }

@@ -110,108 +110,146 @@ export default function GerenciamentoGuardaVidas() {
     };
 
     return (
-        <div>
-            <h1>Gerenciamento de Guarda-Vidas</h1>
-            {erro && <p style={{ color: "red" }}>{erro}</p>}
+        <main className="app-shell page">
+            <header className="page-header">
+                <div>
+                    <p className="page-kicker">Administracao</p>
+                    <h1>Guarda-Vidas</h1>
+                    <p className="page-description">
+                        Cadastre, edite e acompanhe os profissionais autorizados a acessar o sistema.
+                    </p>
+                </div>
 
-            {!mostrarFormulario ? (
-                <>
-                    <button onClick={() => setMostrarFormulario(true)}>
-                        + Novo Guarda-Vida
+                {!mostrarFormulario && (
+                    <button className="btn btn-primary" onClick={() => setMostrarFormulario(true)}>
+                        Novo Guarda-Vida
                     </button>
+                )}
+            </header>
 
-                    <hr />
+            <section className="content-grid">
+                {erro && <div className="alert alert-error span-12">{erro}</div>}
 
-                    {carregando ? (
-                        <p>Carregando...</p>
-                    ) : usuarios.length === 0 ? (
-                        <p>Nenhum guarda-vidas cadastrado</p>
-                    ) : (
-                        <table border="1" cellPadding="10">
-                            <thead>
-                                <tr>
-                                    <th>Nome Completo</th>
-                                    <th>CPF</th>
-                                    <th>Nível de Acesso</th>
-                                    <th>Status</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {usuarios.map((usuario) => (
-                                    <tr key={usuario.id}>
-                                        <td>{usuario.nomeCompleto}</td>
-                                        <td>{usuario.cpf}</td>
-                                        <td>{usuario.nivelAcesso}</td>
-                                        <td>{usuario.ativo ? "Ativo" : "Inativo"}</td>
-                                        <td>
-                                            <button onClick={() => editarUsuario(usuario)}>
-                                                Editar
-                                            </button>
-                                            {usuario.ativo && (
-                                                <button onClick={() => desativarUsuario(usuario.id)}>
-                                                    Desativar
-                                                </button>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    )}
-                </>
-            ) : (
-                <>
-                    <h2>{editando ? "Editar Guarda-Vida" : "Novo Guarda-Vida"}</h2>
-                    <form onSubmit={salvarUsuario}>
-                        <div>
-                            <label>Nome Completo:</label>
-                            <input
-                                type="text"
-                                name="nomeCompleto"
-                                value={formulario.nomeCompleto}
-                                onChange={handleChange}
-                                required
-                            />
+                {!mostrarFormulario ? (
+                    <section className="card span-12">
+                        <div className="section-title">
+                            <h2>Lista de profissionais</h2>
                         </div>
-                        <br />
-                        <div>
-                            <label>CPF:</label>
-                            <input
-                                type="text"
-                                name="cpf"
-                                inputMode="numeric"
-                                maxLength="11"
-                                value={formulario.cpf}
-                                onChange={handleChange}
-                                required
-                                disabled={!!editando}
-                            />
-                            {editando && <small>CPF não pode ser alterado</small>}
+
+                        {carregando ? (
+                            <div className="alert alert-info">Carregando Guarda-Vidas...</div>
+                        ) : usuarios.length === 0 ? (
+                            <div className="empty-state">Nenhum Guarda-Vida cadastrado.</div>
+                        ) : (
+                            <div className="table-wrap">
+                                <table className="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Nome completo</th>
+                                            <th>CPF</th>
+                                            <th>Nivel de acesso</th>
+                                            <th>Status</th>
+                                            <th>Acoes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {usuarios.map((usuario) => (
+                                            <tr key={usuario.id}>
+                                                <td>{usuario.nomeCompleto}</td>
+                                                <td>{usuario.cpf}</td>
+                                                <td>
+                                                    <span className={`badge ${usuario.nivelAcesso === "ADMIN" ? "badge-admin" : "badge-free"}`}>
+                                                        {usuario.nivelAcesso}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span className={`badge ${usuario.ativo ? "badge-active" : "badge-inactive"}`}>
+                                                        {usuario.ativo ? "Ativo" : "Inativo"}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div className="button-row">
+                                                        <button className="btn btn-secondary" onClick={() => editarUsuario(usuario)}>
+                                                            Editar
+                                                        </button>
+                                                        {usuario.ativo && (
+                                                            <button className="btn btn-danger" onClick={() => desativarUsuario(usuario.id)}>
+                                                                Desativar
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </section>
+                ) : (
+                    <section className="card span-7">
+                        <div className="section-title">
+                            <h2>{editando ? "Editar Guarda-Vida" : "Novo Guarda-Vida"}</h2>
                         </div>
-                        <br />
-                        <div>
-                            <label>Nível de Acesso:</label>
-                            <select
-                                name="nivelAcesso"
-                                value={formulario.nivelAcesso}
-                                onChange={handleChange}
-                            >
-                                <option value="OCUPADO">OCUPADO</option>
-                                <option value="LIVRE">LIVRE</option>
-                                <option value="ADMIN">ADMIN</option>
-                            </select>
-                        </div>
-                        <br />
-                        <button type="submit" disabled={carregando}>
-                            {carregando ? "Salvando..." : "Salvar"}
-                        </button>
-                        <button type="button" onClick={cancelarEdicao}>
-                            Cancelar
-                        </button>
-                    </form>
-                </>
-            )}
-        </div>
+
+                        <form className="form-grid" onSubmit={salvarUsuario}>
+                            <div className="field">
+                                <label htmlFor="nomeCompleto">Nome completo</label>
+                                <input
+                                    id="nomeCompleto"
+                                    className="input"
+                                    type="text"
+                                    name="nomeCompleto"
+                                    value={formulario.nomeCompleto}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+
+                            <div className="field">
+                                <label htmlFor="cpf">CPF</label>
+                                <input
+                                    id="cpf"
+                                    className="input"
+                                    type="text"
+                                    name="cpf"
+                                    inputMode="numeric"
+                                    maxLength="11"
+                                    value={formulario.cpf}
+                                    onChange={handleChange}
+                                    required
+                                    disabled={!!editando}
+                                />
+                                {editando && <small>CPF nao pode ser alterado.</small>}
+                            </div>
+
+                            <div className="field">
+                                <label htmlFor="nivelAcesso">Nivel de acesso</label>
+                                <select
+                                    id="nivelAcesso"
+                                    className="select"
+                                    name="nivelAcesso"
+                                    value={formulario.nivelAcesso}
+                                    onChange={handleChange}
+                                >
+                                    <option value="OCUPADO">OCUPADO</option>
+                                    <option value="LIVRE">LIVRE</option>
+                                    <option value="ADMIN">ADMIN</option>
+                                </select>
+                            </div>
+
+                            <div className="button-row">
+                                <button className="btn btn-primary" type="submit" disabled={carregando}>
+                                    {carregando ? "Salvando..." : "Salvar"}
+                                </button>
+                                <button className="btn btn-secondary" type="button" onClick={cancelarEdicao}>
+                                    Cancelar
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+                )}
+            </section>
+        </main>
     );
 }
