@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { cpfBasicoValido, limparCpf, useAuth } from "../context/AuthContext";
 
 export function Login() {
-
     const navigate = useNavigate();
     const { login } = useAuth();
 
@@ -23,23 +22,19 @@ export function Login() {
             const loginNumerico = /^[\d.\-\s]+$/.test(valorDigitado);
             const loginEmail = valorDigitado.includes("@");
 
-            // Valida CPF apenas se for login numérico
             if (loginNumerico && !cpfBasicoValido(cpfLimpo)) {
-                setErro("Informe um CPF válido com 11 números");
+                setErro("CPF inválido. Use 11 dígitos.");
+                setCarregando(false);
                 return;
             }
 
-            // Envia CPF se for numérico, email se tiver @
-            const loginData = {
-                senha
-            };
+            const loginData = { senha };
 
             if (loginNumerico) {
                 loginData.cpf = cpfLimpo;
             } else if (loginEmail) {
                 loginData.email = valorDigitado;
             } else {
-                // Se não for claro, envia ambos (back-end decide)
                 loginData.cpf = cpfLimpo;
                 loginData.email = valorDigitado;
             }
@@ -52,29 +47,34 @@ export function Login() {
                 navigate("/dashboard");
             }
         } catch (erro) {
-            setErro(erro.message || "CPF, email ou senha inválidos");
+            // Converte mensagens técnicas em mensagens curtas e diretas
+            if (erro.message && (erro.message.includes("autenticação") || erro.message.includes("auth") || erro.message.includes("invalid"))) {
+                setErro("CPF ou senha incorretos");
+            } else {
+                setErro("CPF ou senha incorretos");
+            }
         } finally {
             setCarregando(false);
         }
     };
 
     return (
-        <div className="app-shell">
+        <div className="app-shell" style={{ paddingTop: 0 }}>
             <main className="login-page">
                 <section className="login-visual" aria-label="Identidade institucional">
-                    <span className="login-seal">CB</span>
+                    <span className="login-seal" aria-hidden="true"></span>
                     <p className="page-kicker">Acesso restrito</p>
-                    <h1>Controle operacional de Salva-Vidas</h1>
+                    <h1>Controle Operacional</h1>
                     <p>
-                        Plataforma institucional para acompanhamento de postos, turnos e informacoes operacionais.
+                        Plataforma institucional do Corpo de Bombeiros Militar de Santa Catarina para gestão de postos e salvamentos.
                     </p>
                 </section>
 
                 <section className="login-panel-wrap">
                     <div className="card login-card">
-                        <p className="page-kicker">Autenticacao</p>
+                        <p className="page-kicker">Autenticação</p>
                         <h2>Entrar no sistema</h2>
-                        <p className="page-description">Use CPF e senha fornecidos pela supervisao.</p>
+                        <p className="page-description" style={{ marginBottom: "20px" }}>Use seu CPF e senha cadastrados.</p>
 
                         <form className="form-grid" onSubmit={fazerLogin}>
                             <div className="field">
@@ -84,7 +84,7 @@ export function Login() {
                                     className="input"
                                     type="text"
                                     inputMode="numeric"
-                                    placeholder="Digite seu CPF"
+                                    placeholder="Digite seu CPF (apenas números)"
                                     value={identificador}
                                     onChange={(e) => setIdentificador(e.target.value)}
                                     required
@@ -106,7 +106,7 @@ export function Login() {
 
                             {erro && <div className="alert alert-error">{erro}</div>}
 
-                            <button className="btn btn-primary btn-wide" type="submit" disabled={carregando}>
+                            <button className="btn btn-primary btn-wide" type="submit" disabled={carregando} style={{ marginTop: "10px" }}>
                                 {carregando ? "Entrando..." : "Entrar"}
                             </button>
                         </form>

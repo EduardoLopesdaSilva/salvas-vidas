@@ -5,7 +5,7 @@ export function Home() {
         <main className="app-shell page public-page">
             <section className="login-page">
                 <div className="login-visual">
-                    <span className="login-seal">CB</span>
+                    <span className="login-seal" aria-hidden="true"></span>
                     <p className="page-kicker">Sistema institucional</p>
                     <h1>Gestao para Salva-Vidas</h1>
                     <p>Ambiente oficial para controle de turnos, postos e informacoes operacionais.</p>

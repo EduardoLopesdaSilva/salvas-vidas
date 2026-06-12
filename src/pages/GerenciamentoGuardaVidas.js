@@ -47,7 +47,7 @@ export default function GerenciamentoGuardaVidas() {
         }
 
         if (!cpfBasicoValido(formulario.cpf)) {
-            setErro("Informe um CPF válido com 11 números");
+            setErro("CPF inválido. Deve ter 11 números.");
             return;
         }
 
@@ -113,7 +113,7 @@ export default function GerenciamentoGuardaVidas() {
         <main className="app-shell page">
             <header className="page-header">
                 <div>
-                    <p className="page-kicker">Administracao</p>
+                    <p className="page-kicker">Administração</p>
                     <h1>Guarda-Vidas</h1>
                     <p className="page-description">
                         Cadastre, edite e acompanhe os profissionais autorizados a acessar o sistema.
@@ -122,7 +122,7 @@ export default function GerenciamentoGuardaVidas() {
 
                 {!mostrarFormulario && (
                     <button className="btn btn-primary" onClick={() => setMostrarFormulario(true)}>
-                        Novo Guarda-Vida
+                        + Novo Guarda-Vida
                     </button>
                 )}
             </header>
@@ -141,49 +141,85 @@ export default function GerenciamentoGuardaVidas() {
                         ) : usuarios.length === 0 ? (
                             <div className="empty-state">Nenhum Guarda-Vida cadastrado.</div>
                         ) : (
-                            <div className="table-wrap">
-                                <table className="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Nome completo</th>
-                                            <th>CPF</th>
-                                            <th>Nivel de acesso</th>
-                                            <th>Status</th>
-                                            <th>Acoes</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {usuarios.map((usuario) => (
-                                            <tr key={usuario.id}>
-                                                <td>{usuario.nomeCompleto}</td>
-                                                <td>{usuario.cpf}</td>
-                                                <td>
-                                                    <span className={`badge ${usuario.nivelAcesso === "ADMIN" ? "badge-admin" : "badge-free"}`}>
-                                                        {usuario.nivelAcesso}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <span className={`badge ${usuario.ativo ? "badge-active" : "badge-inactive"}`}>
+                            <>
+                                {/* TABELA: VISÍVEL NO DESKTOP */}
+                                <div className="table-wrap">
+                                    <table className="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Nome completo</th>
+                                                <th>CPF</th>
+                                                <th>Nível de acesso</th>
+                                                <th>Status</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {usuarios.map((usuario) => (
+                                                <tr key={usuario.id}>
+                                                    <td style={{ fontWeight: "bold" }}>{usuario.nomeCompleto}</td>
+                                                    <td>{usuario.cpf}</td>
+                                                    <td>
+                                                        <span className={`badge ${usuario.nivelAcesso === "ADMIN" ? "badge-admin" : "badge-free"}`}>
+                                                            {usuario.nivelAcesso}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span className={`badge ${usuario.ativo ? "badge-active" : "badge-inactive"}`}>
+                                                            {usuario.ativo ? "Ativo" : "Inativo"}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div className="button-row">
+                                                            <button className="btn btn-secondary" style={{ minHeight: "38px", padding: "8px 14px", fontSize: "0.85rem" }} onClick={() => editarUsuario(usuario)}>
+                                                                Editar
+                                                            </button>
+                                                            {usuario.ativo && (
+                                                                <button className="btn btn-danger" style={{ minHeight: "38px", padding: "8px 14px", fontSize: "0.85rem" }} onClick={() => desativarUsuario(usuario.id)}>
+                                                                    Desativar
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* LISTA DE CARTÕES: VISÍVEL NO MOBILE */}
+                                <div className="responsive-cards-container">
+                                    {usuarios.map((usuario) => (
+                                        <div className="user-mobile-card" key={usuario.id}>
+                                            <div className="user-card-header">
+                                                <span className="user-card-name">{usuario.nomeCompleto}</span>
+                                                <span className={`badge ${usuario.nivelAcesso === "ADMIN" ? "badge-admin" : "badge-free"}`}>
+                                                    {usuario.nivelAcesso}
+                                                </span>
+                                            </div>
+                                            <div className="user-card-details">
+                                                <div><strong>CPF:</strong> {usuario.cpf}</div>
+                                                <div>
+                                                    <strong>Status:</strong>{" "}
+                                                    <span className={`badge ${usuario.ativo ? "badge-active" : "badge-inactive"}`} style={{ padding: "2px 6px", fontSize: "0.7rem" }}>
                                                         {usuario.ativo ? "Ativo" : "Inativo"}
                                                     </span>
-                                                </td>
-                                                <td>
-                                                    <div className="button-row">
-                                                        <button className="btn btn-secondary" onClick={() => editarUsuario(usuario)}>
-                                                            Editar
-                                                        </button>
-                                                        {usuario.ativo && (
-                                                            <button className="btn btn-danger" onClick={() => desativarUsuario(usuario.id)}>
-                                                                Desativar
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                                </div>
+                                            </div>
+                                            <div className="user-card-actions">
+                                                <button className="btn btn-secondary" style={{ flex: 1, minHeight: "44px", padding: "8px" }} onClick={() => editarUsuario(usuario)}>
+                                                    Editar
+                                                </button>
+                                                {usuario.ativo && (
+                                                    <button className="btn btn-danger" style={{ flex: 1, minHeight: "44px", padding: "8px" }} onClick={() => desativarUsuario(usuario.id)}>
+                                                        Desativar
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
                         )}
                     </section>
                 ) : (
@@ -203,6 +239,7 @@ export default function GerenciamentoGuardaVidas() {
                                     value={formulario.nomeCompleto}
                                     onChange={handleChange}
                                     required
+                                    disabled={carregando}
                                 />
                             </div>
 
@@ -218,31 +255,33 @@ export default function GerenciamentoGuardaVidas() {
                                     value={formulario.cpf}
                                     onChange={handleChange}
                                     required
-                                    disabled={!!editando}
+                                    disabled={!!editando || carregando}
+                                    placeholder="Apenas os 11 números"
                                 />
-                                {editando && <small>CPF nao pode ser alterado.</small>}
+                                {editando && <small>O CPF não pode ser alterado após o cadastro.</small>}
                             </div>
 
                             <div className="field">
-                                <label htmlFor="nivelAcesso">Nivel de acesso</label>
+                                <label htmlFor="nivelAcesso">Nível de acesso</label>
                                 <select
                                     id="nivelAcesso"
                                     className="select"
                                     name="nivelAcesso"
                                     value={formulario.nivelAcesso}
                                     onChange={handleChange}
+                                    disabled={carregando}
                                 >
-                                    <option value="OCUPADO">OCUPADO</option>
-                                    <option value="LIVRE">LIVRE</option>
-                                    <option value="ADMIN">ADMIN</option>
+                                    <option value="OCUPADO">Guarda-Vidas (Operacional)</option>
+                                    <option value="LIVRE">Guarda-Vidas (Livre)</option>
+                                    <option value="ADMIN">Administrador (Sargento)</option>
                                 </select>
                             </div>
 
-                            <div className="button-row">
-                                <button className="btn btn-primary" type="submit" disabled={carregando}>
+                            <div className="button-row" style={{ marginTop: "10px" }}>
+                                <button className="btn btn-primary" type="submit" disabled={carregando} style={{ flex: 1 }}>
                                     {carregando ? "Salvando..." : "Salvar"}
                                 </button>
-                                <button className="btn btn-secondary" type="button" onClick={cancelarEdicao}>
+                                <button className="btn btn-secondary" type="button" onClick={cancelarEdicao} disabled={carregando} style={{ flex: 1 }}>
                                     Cancelar
                                 </button>
                             </div>

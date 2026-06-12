@@ -22,17 +22,6 @@ function persistSession(data) {
   localStorage.setItem(USER_KEY, JSON.stringify(user));
   localStorage.setItem("usuario_id", String(user.id));
 
-  // Mantem compatibilidade temporaria com telas antigas enquanto o projeto e migrado.
-  localStorage.setItem(
-    "usuario_salva_vidas",
-    JSON.stringify({
-      nome: user.nome || user.email || user.cpf,
-      cpf: user.cpf,
-      email: user.email,
-      funcao: user.nivelAcesso === "ADMIN" ? "supervisor" : "salva-vidas",
-    })
-  );
-
   return user;
 }
 
@@ -75,7 +64,6 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("token");
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem("usuario_id");
-    localStorage.removeItem("usuario_salva_vidas");
     setUser(null);
   };
 
