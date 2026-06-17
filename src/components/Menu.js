@@ -37,10 +37,6 @@ export function Menu() {
                             <span className="nav-icon">🏠</span>
                             Painel
                         </NavLink>
-                        <NavLink to="/ocorrencias" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
-                            <span className="nav-icon">🚨</span>
-                            Ocorrências
-                        </NavLink>
                         <NavLink to="/checkin" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
                             <span className="nav-icon">📥</span>
                             Iniciar turno
@@ -64,12 +60,6 @@ export function Menu() {
                             </>
                         )}
 
-                        <div className="sidebar-group">Opções</div>
-                        <NavLink to="/configuracoes" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
-                            <span className="nav-icon">⚙️</span>
-                            Configurações
-                        </NavLink>
-
                         <button className="logout-button" onClick={logout}>
                             Sair do sistema
                         </button>
@@ -83,11 +73,6 @@ export function Menu() {
                     <NavLink to="/dashboard" className={({ isActive }) => `bottom-nav-item ${isActive ? "active" : ""}`}>
                         <span className="bottom-nav-icon">🏠</span>
                         <span>Painel</span>
-                    </NavLink>
-                    
-                    <NavLink to="/ocorrencias" className={({ isActive }) => `bottom-nav-item ${isActive ? "active" : ""}`}>
-                        <span className="bottom-nav-icon">🚨</span>
-                        <span>Ocorrências</span>
                     </NavLink>
                     
                     <NavLink to={hasActiveTurn ? "/checkout" : "/checkin"} className={({ isActive }) => `bottom-nav-item ${isActive ? "active" : ""}`}>

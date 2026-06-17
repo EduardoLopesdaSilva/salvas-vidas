@@ -56,6 +56,11 @@ export default function Checkin() {
             return;
         }
 
+        if (foto === "sem_foto") {
+            setErro("Tire uma foto de presença no posto");
+            return;
+        }
+
         try {
             setCarregando(true);
             await apiRequest("/check/in", {
@@ -63,12 +68,14 @@ export default function Checkin() {
                 body: {
                     idUsuario: user.id,
                     postoId: Number(postoSelecionado),
-                    foto: foto || "sem_foto"
+                    foto: foto
                 }
             });
 
             // Limpa contadores e define o posto ativo localmente
             localStorage.setItem("active_turn_posto", String(postoSelecionado));
+            const postoNome = postos.find(p => p.id === Number(postoSelecionado))?.nome || "Posto";
+            localStorage.setItem("active_turn_posto_name", postoNome);
             localStorage.setItem("current_shift_counters", JSON.stringify({
                 prevencoes: 0,
                 lesoes: 0,
@@ -123,7 +130,7 @@ export default function Checkin() {
 
                     {/* FOTO DE PRESENÇA */}
                     <div className="field">
-                        <label>Foto de presença no posto (Opcional)</label>
+                        <label>Foto de presença no posto *</label>
                         <input 
                             type="file" 
                             accept="image/*" 
@@ -134,8 +141,8 @@ export default function Checkin() {
                         />
                         
                         {foto === "sem_foto" ? (
-                            <button type="button" className="btn btn-secondary" onClick={triggerCamera}>
-                                📸 Tirar Foto de Presença
+                            <button type="button" className="btn btn-primary btn-wide" onClick={triggerCamera}>
+                                📸 Tirar Foto
                             </button>
                         ) : (
                             <div className="photo-preview-wrap" style={{ maxHeight: "240px" }}>

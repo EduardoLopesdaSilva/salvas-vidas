@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../services/api";
 
@@ -20,8 +20,11 @@ export default function Checkout() {
             : { prevencoes: 0, lesoes: 0, queimaduras: 0 };
     });
 
+    const [foto, setFoto] = useState("sem_foto");
     const [erro, setErro] = useState("");
     const [carregando, setCarregando] = useState(false);
+
+    const cameraInputRef = useRef(null);
 
     useEffect(() => {
         setCarregando(true);
@@ -45,11 +48,41 @@ export default function Checkout() {
         }));
     };
 
+    const handleFileChange = (e) => {
+        setErro("");
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 3 * 1024 * 1024) {
+                setErro("Foto muito pesada. Escolha uma imagem de até 3MB.");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFoto(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const triggerCamera = () => {
+        cameraInputRef.current.click();
+    };
+
+    const removerFoto = () => {
+        setFoto("sem_foto");
+        if (cameraInputRef.current) cameraInputRef.current.value = "";
+    };
+
     const finalizarTurno = async () => {
         setErro("");
 
         if (!postoSelecionado) {
             setErro("Selecione um posto");
+            return;
+        }
+
+        if (foto === "sem_foto") {
+            setErro("Tire uma foto de encerramento no posto");
             return;
         }
 
@@ -59,7 +92,7 @@ export default function Checkout() {
                 method: "POST",
                 body: {
                     postoId: Number(postoSelecionado),
-                    foto: "foto_final",
+                    foto: foto,
                     prevencoes: turno.prevencoes.toString(),
                     lesoes: turno.lesoes.toString(),
                     queimaduras: turno.queimaduras.toString()
@@ -68,6 +101,7 @@ export default function Checkout() {
 
             // Limpa as variáveis locais do turno ativo
             localStorage.removeItem("active_turn_posto");
+            localStorage.removeItem("active_turn_posto_name");
             localStorage.removeItem("current_shift_counters");
 
             alert("Turno finalizado!");
@@ -114,6 +148,32 @@ export default function Checkout() {
                                     </option>
                                 ))}
                         </select>
+                    </div>
+
+                    {/* FOTO DE ENCERRAMENTO */}
+                    <div className="field">
+                        <label>Foto de encerramento no posto *</label>
+                        <input 
+                            type="file" 
+                            accept="image/*" 
+                            capture="environment" 
+                            ref={cameraInputRef} 
+                            className="hidden-file-input"
+                            onChange={handleFileChange}
+                        />
+                        
+                        {foto === "sem_foto" ? (
+                            <button type="button" className="btn btn-primary btn-wide" onClick={triggerCamera}>
+                                📸 Tirar Foto
+                            </button>
+                        ) : (
+                            <div className="photo-preview-wrap" style={{ maxHeight: "240px" }}>
+                                <img src={foto} alt="Encerramento" className="photo-preview-image" />
+                                <button type="button" className="photo-remove-btn" onClick={removerFoto} aria-label="Remover foto">
+                                    &times;
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* CONTADOR DE PREVENÇÕES */}

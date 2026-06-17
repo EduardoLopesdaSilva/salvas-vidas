@@ -9,10 +9,7 @@ import Supervisor from "./pages/Supervisor";
 import GerenciamentoGuardaVidas from "./pages/GerenciamentoGuardaVidas";
 import Checkin from "./pages/Checkin";
 import Checkout from "./pages/Checkout";
-import Ocorrencias from "./pages/Ocorrencias";
-import NovaOcorrencia from "./pages/NovaOcorrencia";
 import Perfil from "./pages/Perfil";
-import Configuracoes from "./pages/Configuracoes";
 import { Menu } from "./components/Menu";
 import { Autenticacao } from "./components/Autenticacao";
 import { AutorizacaoSupervisor } from "./components/AutorizacaoSupervisor";
@@ -88,34 +85,10 @@ function App() {
             }
           />
           <Route
-            path="/ocorrencias"
-            element={
-              <Autenticacao>
-                <Ocorrencias />
-              </Autenticacao>
-            }
-          />
-          <Route
-            path="/ocorrencias/nova"
-            element={
-              <Autenticacao>
-                <NovaOcorrencia />
-              </Autenticacao>
-            }
-          />
-          <Route
             path="/perfil"
             element={
               <Autenticacao>
                 <Perfil />
-              </Autenticacao>
-            }
-          />
-          <Route
-            path="/configuracoes"
-            element={
-              <Autenticacao>
-                <Configuracoes />
               </Autenticacao>
             }
           />
