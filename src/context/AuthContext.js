@@ -1,26 +1,51 @@
 import { createContext, useContext, useMemo, useState } from "react";
 import { apiRequest } from "../services/api";
+import { clearActiveShift } from "../utils/shiftSession";
 
 const AuthContext = createContext(null);
 const USER_KEY = "auth_user";
 
 function readStoredUser() {
-  const saved = localStorage.getItem(USER_KEY);
-  return saved ? JSON.parse(saved) : null;
+  try {
+    const saved = localStorage.getItem(USER_KEY);
+    return saved ? JSON.parse(saved) : null;
+  } catch {
+    localStorage.removeItem(USER_KEY);
+    return null;
+  }
+}
+
+function normalizeAccessLevel(value) {
+  return String(value || "").trim().toUpperCase();
+}
+
+function normalizeUser(data = {}) {
+  const source = data.usuario || data.user || data;
+  const nome = source.nome || source.nomeCompleto || "";
+
+  return {
+    id: source.id,
+    nome,
+    nomeCompleto: source.nomeCompleto || nome,
+    cpf: source.cpf,
+    email: source.email,
+    nivelAcesso: normalizeAccessLevel(source.nivelAcesso),
+  };
 }
 
 function persistSession(data) {
-  const user = {
-    id: data.id,
-    nome: data.nome,
-    cpf: data.cpf,
-    email: data.email,
-    nivelAcesso: data.nivelAcesso,
-  };
+  const user = normalizeUser(data);
+  const token = data.token || data.accessToken || data.jwt;
 
-  localStorage.setItem("token", data.token);
+  if (token) {
+    localStorage.setItem("token", token);
+  }
+
   localStorage.setItem(USER_KEY, JSON.stringify(user));
-  localStorage.setItem("usuario_id", String(user.id));
+
+  if (user.id !== undefined && user.id !== null) {
+    localStorage.setItem("usuario_id", String(user.id));
+  }
 
   return user;
 }
@@ -47,11 +72,10 @@ export function AuthProvider({ children }) {
   const login = async ({ cpf, email, senha }) => {
     const data = await apiRequest("/auth/login", {
       method: "POST",
-      // Envia cpf e/ou email para permitir login por ambos
-      body: { 
+      body: {
         cpf: cpf ? normalizarIdentificadorLogin(cpf) : null,
         email: email || null,
-        senha 
+        senha,
       },
     });
 
@@ -64,6 +88,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("token");
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem("usuario_id");
+    clearActiveShift();
     setUser(null);
   };
 
@@ -71,7 +96,9 @@ export function AuthProvider({ children }) {
     () => ({
       user,
       isAuthenticated: Boolean(user && localStorage.getItem("token")),
-      isSupervisor: user?.nivelAcesso === "ADMIN",
+      isSupervisor: ["ADMIN", "SUPERVISOR", "SARGENTO"].includes(
+        normalizeAccessLevel(user?.nivelAcesso)
+      ),
       login,
       logout,
     }),

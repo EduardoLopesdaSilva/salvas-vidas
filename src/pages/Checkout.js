@@ -1,250 +1,269 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../services/api";
+import { clearActiveShift, getActiveShift, updateShiftCounters } from "../utils/shiftSession";
+
+const EMPTY_COUNTERS = {
+  prevencoes: 0,
+  lesoes: 0,
+  queimaduras: 0,
+};
 
 export default function Checkout() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const turnoAtivo = getActiveShift();
+  const [postos, setPostos] = useState([]);
+  const [postoSelecionado, setPostoSelecionado] = useState(() => String(turnoAtivo?.postoId || ""));
+  const [turno, setTurno] = useState(() => turnoAtivo?.counters || EMPTY_COUNTERS);
+  const [foto, setFoto] = useState("sem_foto");
+  const [erro, setErro] = useState("");
+  const [carregando, setCarregando] = useState(false);
+  const cameraInputRef = useRef(null);
 
-    const [postos, setPostos] = useState([]);
-    
-    // Pré-seleciona o posto ativo localmente, se houver
-    const [postoSelecionado, setPostoSelecionado] = useState(() => {
-        return localStorage.getItem("active_turn_posto") || "";
+  useEffect(() => {
+    setCarregando(true);
+    apiRequest("/postos")
+      .then(setPostos)
+      .catch(() => setErro("Erro ao carregar a lista de postos."))
+      .finally(() => setCarregando(false));
+  }, []);
+
+  const persistirTurno = (nextTurno) => {
+    setTurno(nextTurno);
+    if (turnoAtivo) {
+      updateShiftCounters(nextTurno);
+    }
+  };
+
+  const handleIncrement = (campo) => {
+    persistirTurno({
+      ...turno,
+      [campo]: Number(turno[campo]) + 1,
     });
+  };
 
-    // Pré-carrega os contadores acumulados de ocorrências registradas
-    const [turno, setTurno] = useState(() => {
-        const localContadores = localStorage.getItem("current_shift_counters");
-        return localContadores 
-            ? JSON.parse(localContadores) 
-            : { prevencoes: 0, lesoes: 0, queimaduras: 0 };
+  const handleDecrement = (campo) => {
+    persistirTurno({
+      ...turno,
+      [campo]: Math.max(0, Number(turno[campo]) - 1),
     });
+  };
 
-    const [foto, setFoto] = useState("sem_foto");
-    const [erro, setErro] = useState("");
-    const [carregando, setCarregando] = useState(false);
+  const handleFileChange = (event) => {
+    setErro("");
+    const file = event.target.files[0];
 
-    const cameraInputRef = useRef(null);
+    if (!file) {
+      return;
+    }
 
-    useEffect(() => {
-        setCarregando(true);
-        apiRequest("/postos")
-            .then(setPostos)
-            .catch(error => setErro("Erro ao carregar a lista de postos."))
-            .finally(() => setCarregando(false));
-    }, []);
+    if (file.size > 3 * 1024 * 1024) {
+      setErro("Foto muito pesada. Escolha uma imagem de ate 3MB.");
+      return;
+    }
 
-    const handleIncrement = (campo) => {
-        setTurno(prev => ({
-            ...prev,
-            [campo]: Number(prev[campo]) + 1
-        }));
-    };
+    const reader = new FileReader();
+    reader.onloadend = () => setFoto(reader.result);
+    reader.readAsDataURL(file);
+  };
 
-    const handleDecrement = (campo) => {
-        setTurno(prev => ({
-            ...prev,
-            [campo]: Math.max(0, Number(prev[campo]) - 1)
-        }));
-    };
+  const triggerCamera = () => {
+    cameraInputRef.current?.click();
+  };
 
-    const handleFileChange = (e) => {
-        setErro("");
-        const file = e.target.files[0];
-        if (file) {
-            if (file.size > 3 * 1024 * 1024) {
-                setErro("Foto muito pesada. Escolha uma imagem de até 3MB.");
-                return;
-            }
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setFoto(reader.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
+  const removerFoto = () => {
+    setFoto("sem_foto");
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = "";
+    }
+  };
 
-    const triggerCamera = () => {
-        cameraInputRef.current.click();
-    };
+  const finalizarTurno = async () => {
+    setErro("");
 
-    const removerFoto = () => {
-        setFoto("sem_foto");
-        if (cameraInputRef.current) cameraInputRef.current.value = "";
-    };
+    if (!turnoAtivo) {
+      setErro("Nenhum turno ativo encontrado. Faca check-in antes do checkout.");
+      return;
+    }
 
-    const finalizarTurno = async () => {
-        setErro("");
+    if (Number(postoSelecionado) !== Number(turnoAtivo.postoId)) {
+      setErro("O checkout deve ser realizado no mesmo posto do turno ativo.");
+      return;
+    }
 
-        if (!postoSelecionado) {
-            setErro("Selecione um posto");
-            return;
-        }
+    if (foto === "sem_foto") {
+      setErro("Tire uma foto de encerramento no posto.");
+      return;
+    }
 
-        if (foto === "sem_foto") {
-            setErro("Tire uma foto de encerramento no posto");
-            return;
-        }
+    try {
+      setCarregando(true);
+      await apiRequest("/checkout/out", {
+        method: "POST",
+        body: {
+          postoId: Number(postoSelecionado),
+          foto,
+          prevencoes: String(turno.prevencoes),
+          lesoes: String(turno.lesoes),
+          queimaduras: String(turno.queimaduras),
+        },
+      });
 
-        try {
-            setCarregando(true);
-            await apiRequest("/checkout/out", {
-                method: "POST",
-                body: {
-                    postoId: Number(postoSelecionado),
-                    foto: foto,
-                    prevencoes: turno.prevencoes.toString(),
-                    lesoes: turno.lesoes.toString(),
-                    queimaduras: turno.queimaduras.toString()
-                }
-            });
+      clearActiveShift();
+      navigate("/dashboard", {
+        state: {
+          feedback: {
+            type: "success",
+            message: "Turno finalizado com sucesso.",
+          },
+        },
+      });
+    } catch (error) {
+      setErro(error.message || "Erro ao finalizar turno.");
+    } finally {
+      setCarregando(false);
+    }
+  };
 
-            // Limpa as variáveis locais do turno ativo
-            localStorage.removeItem("active_turn_posto");
-            localStorage.removeItem("active_turn_posto_name");
-            localStorage.removeItem("current_shift_counters");
+  const postoAtual = postos.find((posto) => Number(posto.id) === Number(postoSelecionado));
+  const disabled = carregando || !turnoAtivo;
 
-            alert("Turno finalizado!");
-            navigate("/dashboard");
-        } catch (error) {
-            setErro(error.message || "Erro ao finalizar turno.");
-        } finally {
-            setCarregando(false);
-        }
-    };
+  return (
+    <main className="app-shell page">
+      <header className="page-header">
+        <div>
+          <p className="page-kicker">Operacao</p>
+          <h1>Finalizar turno</h1>
+          <p className="page-description">Revise os numeros do atendimento e encerre a atividade do posto.</p>
+        </div>
+      </header>
 
-    return (
-        <main className="app-shell page">
-            <header className="page-header">
-                <div>
-                    <p className="page-kicker">Operação</p>
-                    <h1>Finalizar turno</h1>
-                    <p className="page-description">Revise os números do atendimento e encerre a atividade do posto.</p>
-                </div>
-            </header>
+      <section className="content-grid">
+        <div className="card span-7 form-grid">
+          <div className="section-title">
+            <h2>Relatorio de fechamento</h2>
+          </div>
 
-            <section className="content-grid">
-                <div className="card span-7 form-grid">
-                    <div className="section-title">
-                        <h2>Relatório de Fechamento</h2>
-                    </div>
+          {!turnoAtivo && <div className="alert alert-info">Nenhum turno ativo foi encontrado nesta sessao.</div>}          <div className="field">
+            <label htmlFor="posto-checkout">Posto de atuacao</label>
+            <select
+              id="posto-checkout"
+              className="select"
+              value={postoSelecionado}
+              onChange={(event) => setPostoSelecionado(event.target.value)}
+              disabled={disabled}
+            >
+              <option value="">Selecione seu posto</option>
+              {postos
+                .filter((posto) => posto.status === "OCUPADO")
+                .map((posto) => (
+                  <option key={posto.id} value={posto.id}>
+                    {posto.nome}
+                  </option>
+                ))}
+            </select>
+            {turnoAtivo && <small>O checkout usa o mesmo posto salvo no turno ativo.</small>}
+          </div>
 
-                    {/* SELEÇÃO DO POSTO */}
-                    <div className="field">
-                        <label htmlFor="posto-checkout">Posto de atuação</label>
-                        <select
-                            id="posto-checkout"
-                            className="select"
-                            value={postoSelecionado}
-                            onChange={(e) => setPostoSelecionado(e.target.value)}
-                            disabled={carregando}
-                        >
-                            <option value="">Selecione seu posto</option>
-                            {postos
-                                .filter(posto => posto.status === "OCUPADO")
-                                .map(posto => (
-                                    <option key={posto.id} value={posto.id}>
-                                        {posto.nome}
-                                    </option>
-                                ))}
-                        </select>
-                    </div>
+          <div className="field">
+            <label>Foto de encerramento no posto *</label>
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              ref={cameraInputRef}
+              className="hidden-file-input"
+              onChange={handleFileChange}
+              disabled={disabled}
+            />
 
-                    {/* FOTO DE ENCERRAMENTO */}
-                    <div className="field">
-                        <label>Foto de encerramento no posto *</label>
-                        <input 
-                            type="file" 
-                            accept="image/*" 
-                            capture="environment" 
-                            ref={cameraInputRef} 
-                            className="hidden-file-input"
-                            onChange={handleFileChange}
-                        />
-                        
-                        {foto === "sem_foto" ? (
-                            <button type="button" className="btn btn-primary btn-wide" onClick={triggerCamera}>
-                                📸 Tirar Foto
-                            </button>
-                        ) : (
-                            <div className="photo-preview-wrap" style={{ maxHeight: "240px" }}>
-                                <img src={foto} alt="Encerramento" className="photo-preview-image" />
-                                <button type="button" className="photo-remove-btn" onClick={removerFoto} aria-label="Remover foto">
-                                    &times;
-                                </button>
-                            </div>
-                        )}
-                    </div>
+            {foto === "sem_foto" ? (
+              <button type="button" className="btn btn-primary btn-wide" onClick={triggerCamera} disabled={disabled}>
+                📸 Tirar foto
+              </button>
+            ) : (
+              <div className="photo-preview-wrap" style={{ maxHeight: "240px" }}>
+                <img src={foto} alt="Encerramento" className="photo-preview-image" />
+                <button type="button" className="photo-remove-btn" onClick={removerFoto} aria-label="Remover foto" disabled={disabled}>
+                  &times;
+                </button>
+              </div>
+            )}
+          </div>
 
-                    {/* CONTADOR DE PREVENÇÕES */}
-                    <div className="field">
-                        <label>Prevenções realizadas</label>
-                        <small>Orientações dadas a banhistas na praia.</small>
-                        <div className="counter-control" style={{ marginTop: "6px" }}>
-                            <button type="button" className="counter-btn" onClick={() => handleDecrement("prevencoes")} disabled={carregando}>-</button>
-                            <span className="counter-value">{turno.prevencoes}</span>
-                            <button type="button" className="counter-btn" onClick={() => handleIncrement("prevencoes")} disabled={carregando}>+</button>
-                        </div>
-                    </div>
+          <div className="field">
+            <label>Prevencoes realizadas</label>
+            <small>Orientacoes dadas a banhistas na praia.</small>
+            <div className="counter-control" style={{ marginTop: "6px" }}>
+              <button type="button" className="counter-btn" onClick={() => handleDecrement("prevencoes")} disabled={disabled}>-</button>
+              <span className="counter-value">{turno.prevencoes}</span>
+              <button type="button" className="counter-btn" onClick={() => handleIncrement("prevencoes")} disabled={disabled}>+</button>
+            </div>
+          </div>
 
-                    {/* CONTADOR DE LESÕES */}
-                    <div className="field">
-                        <label>Lesões registradas (Água-Viva)</label>
-                        <small>Atendimentos por queimaduras de águas-vivas ou caravelas.</small>
-                        <div className="counter-control" style={{ marginTop: "6px" }}>
-                            <button type="button" className="counter-btn" onClick={() => handleDecrement("lesoes")} disabled={carregando}>-</button>
-                            <span className="counter-value">{turno.lesoes}</span>
-                            <button type="button" className="counter-btn" onClick={() => handleIncrement("lesoes")} disabled={carregando}>+</button>
-                        </div>
-                    </div>
+          <div className="field">
+            <label>Lesoes registradas (Agua-Viva)</label>
+            <small>Atendimentos por queimaduras de aguas-vivas ou caravelas.</small>
+            <div className="counter-control" style={{ marginTop: "6px" }}>
+              <button type="button" className="counter-btn" onClick={() => handleDecrement("lesoes")} disabled={disabled}>-</button>
+              <span className="counter-value">{turno.lesoes}</span>
+              <button type="button" className="counter-btn" onClick={() => handleIncrement("lesoes")} disabled={disabled}>+</button>
+            </div>
+          </div>
 
-                    {/* CONTADOR DE QUEIMADURAS */}
-                    <div className="field">
-                        <label>Queimaduras / Outros</label>
-                        <small>Queimaduras solares ou pequenos atendimentos de primeiros socorros.</small>
-                        <div className="counter-control" style={{ marginTop: "6px" }}>
-                            <button type="button" className="counter-btn" onClick={() => handleDecrement("queimaduras")} disabled={carregando}>-</button>
-                            <span className="counter-value">{turno.queimaduras}</span>
-                            <button type="button" className="counter-btn" onClick={() => handleIncrement("queimaduras")} disabled={carregando}>+</button>
-                        </div>
-                    </div>
+          <div className="field">
+            <label>Queimaduras / Outros</label>
+            <small>Queimaduras solares ou pequenos atendimentos de primeiros socorros.</small>
+            <div className="counter-control" style={{ marginTop: "6px" }}>
+              <button type="button" className="counter-btn" onClick={() => handleDecrement("queimaduras")} disabled={disabled}>-</button>
+              <span className="counter-value">{turno.queimaduras}</span>
+              <button type="button" className="counter-btn" onClick={() => handleIncrement("queimaduras")} disabled={disabled}>+</button>
+            </div>
+          </div>
 
-                    {erro && <div className="alert alert-error">{erro}</div>}
+          {erro && <div className="alert alert-error">{erro}</div>}
 
-                    <button className="btn btn-primary btn-wide" onClick={finalizarTurno} disabled={carregando} style={{ marginTop: "10px" }}>
-                        {carregando ? "Finalizando..." : "Finalizar Turno"}
-                    </button>
-                </div>
+          <button className="btn btn-primary btn-wide" type="button" onClick={finalizarTurno} disabled={disabled} style={{ marginTop: "10px" }}>
+            {carregando ? "Finalizando..." : "Finalizar turno"}
+          </button>
+        </div>
 
-                <aside className="card span-5" style={{ height: "fit-content" }}>
-                    <div className="section-title">
-                        <h2>Resumo Operacional</h2>
-                    </div>
-                    <div className="list">
-                        <div className="list-item">
-                            <div>
-                                <strong>Prevenções</strong>
-                                <div style={{ fontSize: "var(--font-xs)", color: "var(--text-muted)" }}>Acumulado do turno</div>
-                            </div>
-                            <span className="badge badge-free" style={{ fontSize: "var(--font-md)", padding: "8px 16px" }}>{turno.prevencoes}</span>
-                        </div>
-                        <div className="list-item">
-                            <div>
-                                <strong>Lesões</strong>
-                                <div style={{ fontSize: "var(--font-xs)", color: "var(--text-muted)" }}>Água-Viva / Acidentes</div>
-                            </div>
-                            <span className="badge badge-busy" style={{ fontSize: "var(--font-md)", padding: "8px 16px" }}>{turno.lesoes}</span>
-                        </div>
-                        <div className="list-item">
-                            <div>
-                                <strong>Queimaduras / Outros</strong>
-                                <div style={{ fontSize: "var(--font-xs)", color: "var(--text-muted)" }}>Primeiros Socorros</div>
-                            </div>
-                            <span className="badge badge-alert" style={{ fontSize: "var(--font-md)", padding: "8px 16px" }}>{turno.queimaduras}</span>
-                        </div>
-                    </div>
-                </aside>
-            </section>
-        </main>
-    );
+        <aside className="card span-5" style={{ height: "fit-content" }}>
+          <div className="section-title">
+            <h2>Resumo operacional</h2>
+          </div>
+          <div className="list">
+            <div className="list-item">
+              <div>
+                <strong>Posto</strong>
+                <div style={{ fontSize: "var(--font-xs)", color: "var(--text-muted)" }}>Turno em andamento</div>
+              </div>
+              <span>{turnoAtivo?.postoNome || postoAtual?.nome || "Nao informado"}</span>
+            </div>
+            <div className="list-item">
+              <div>
+                <strong>Prevencoes</strong>
+                <div style={{ fontSize: "var(--font-xs)", color: "var(--text-muted)" }}>Acumulado do turno</div>
+              </div>
+              <span className="badge badge-free" style={{ fontSize: "var(--font-md)", padding: "8px 16px" }}>{turno.prevencoes}</span>
+            </div>
+            <div className="list-item">
+              <div>
+                <strong>Lesoes</strong>
+                <div style={{ fontSize: "var(--font-xs)", color: "var(--text-muted)" }}>Agua-Viva / Acidentes</div>
+              </div>
+              <span className="badge badge-busy" style={{ fontSize: "var(--font-md)", padding: "8px 16px" }}>{turno.lesoes}</span>
+            </div>
+            <div className="list-item">
+              <div>
+                <strong>Queimaduras / Outros</strong>
+                <div style={{ fontSize: "var(--font-xs)", color: "var(--text-muted)" }}>Primeiros socorros</div>
+              </div>
+              <span className="badge badge-alert" style={{ fontSize: "var(--font-md)", padding: "8px 16px" }}>{turno.queimaduras}</span>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </main>
+  );
 }
