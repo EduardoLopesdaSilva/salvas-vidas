@@ -39,15 +39,15 @@ export function Menu() {
           <div className="sidebar-group">Operacao</div>
           <nav className="sidebar-nav">
             <NavLink to="/dashboard" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
-              <span className="nav-icon">🏠</span>
+              <span className="nav-icon"></span>
               Painel
             </NavLink>
             <NavLink to={turnoPath} className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
-              <span className="nav-icon">🛟</span>
+              <span className="nav-icon"></span>
               {turnoLabel}
             </NavLink>
             <NavLink to="/perfil" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
-              <span className="nav-icon">👤</span>
+              <span className="nav-icon"></span>
               Perfil
             </NavLink>
 
@@ -55,14 +55,14 @@ export function Menu() {
               <>
                 <div className="sidebar-group">Supervisao</div>
                 <NavLink to="/supervisor" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
-                  <span className="nav-icon">📊</span>
+                  <span className="nav-icon"></span>
                   Painel do Sargento
                 </NavLink>
                 <NavLink
                   to="/gerenciamento-guarda-vidas"
                   className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
                 >
-                  <span className="nav-icon">👥</span>
+                  <span className="nav-icon"></span>
                   Guarda-Vidas
                 </NavLink>
               </>
@@ -78,17 +78,17 @@ export function Menu() {
       {isAuthenticated && (
         <nav className="bottom-nav" aria-label="Navegacao movel">
           <NavLink to="/dashboard" className={({ isActive }) => `bottom-nav-item ${isActive ? "active" : ""}`}>
-            <span className="bottom-nav-icon">🏠</span>
+            <span className="bottom-nav-icon"></span>
             <span>Painel</span>
           </NavLink>
 
           <NavLink to={turnoPath} className={({ isActive }) => `bottom-nav-item ${isActive ? "active" : ""}`}>
-            <span className="bottom-nav-icon">🛟</span>
+            <span className="bottom-nav-icon"></span>
             <span>{hasActiveTurn ? "Finalizar" : "Iniciar"}</span>
           </NavLink>
 
           <NavLink to="/perfil" className={({ isActive }) => `bottom-nav-item ${isActive ? "active" : ""}`}>
-            <span className="bottom-nav-icon">👤</span>
+            <span className="bottom-nav-icon"></span>
             <span>Perfil</span>
           </NavLink>
         </nav>

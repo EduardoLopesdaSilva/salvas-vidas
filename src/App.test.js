@@ -1,8 +1,7 @@
-import { render, screen } from '@testing-library/react';
-import App from './App';
+import { cpfBasicoValido, limparCpf } from "./context/AuthContext";
 
-test('renders learn react link', () => {
-  render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+test("normaliza e valida CPF usado no login", () => {
+  expect(limparCpf("123.456.789-01")).toBe("12345678901");
+  expect(cpfBasicoValido("12345678901")).toBe(true);
+  expect(cpfBasicoValido("11111111111")).toBe(false);
 });

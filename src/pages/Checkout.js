@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../services/api";
 import { clearActiveShift, getActiveShift, updateShiftCounters } from "../utils/shiftSession";
+import { prepareImageFile } from "../utils/imageUpload";
 
 const EMPTY_COUNTERS = {
   prevencoes: 0,
@@ -49,7 +50,7 @@ export default function Checkout() {
     });
   };
 
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     setErro("");
     const file = event.target.files[0];
 
@@ -57,14 +58,12 @@ export default function Checkout() {
       return;
     }
 
-    if (file.size > 3 * 1024 * 1024) {
-      setErro("Foto muito pesada. Escolha uma imagem de ate 3MB.");
-      return;
+    try {
+      const prepared = await prepareImageFile(file, { maxSizeBytes: 1024 * 1024 });
+      setFoto(prepared.dataUrl);
+    } catch (error) {
+      setErro(error.message || "Nao foi possivel preparar a foto.");
     }
-
-    const reader = new FileReader();
-    reader.onloadend = () => setFoto(reader.result);
-    reader.readAsDataURL(file);
   };
 
   const triggerCamera = () => {

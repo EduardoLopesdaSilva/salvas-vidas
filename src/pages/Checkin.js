@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { apiRequest } from "../services/api";
 import { getActiveShift, saveActiveShift, subscribeToActiveShift } from "../utils/shiftSession";
+import { prepareImageFile } from "../utils/imageUpload";
 
 export default function Checkin() {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ export default function Checkin() {
 
   useEffect(() => subscribeToActiveShift(setTurnoAtivo), []);
 
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     setErro("");
     const file = event.target.files[0];
 
@@ -33,14 +34,12 @@ export default function Checkin() {
       return;
     }
 
-    if (file.size > 3 * 1024 * 1024) {
-      setErro("Foto muito pesada. Escolha uma imagem de ate 3MB.");
-      return;
+    try {
+      const prepared = await prepareImageFile(file, { maxSizeBytes: 1024 * 1024 });
+      setFoto(prepared.dataUrl);
+    } catch (error) {
+      setErro(error.message || "Nao foi possivel preparar a foto.");
     }
-
-    const reader = new FileReader();
-    reader.onloadend = () => setFoto(reader.result);
-    reader.readAsDataURL(file);
   };
 
   const triggerCamera = () => {

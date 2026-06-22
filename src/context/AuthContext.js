@@ -1,6 +1,6 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { apiRequest } from "../services/api";
-import { clearActiveShift } from "../utils/shiftSession";
+import { clearActiveShift, saveActiveShift } from "../utils/shiftSession";
 
 const AuthContext = createContext(null);
 const USER_KEY = "auth_user";
@@ -17,6 +17,10 @@ function readStoredUser() {
 
 function normalizeAccessLevel(value) {
   return String(value || "").trim().toUpperCase();
+}
+
+function isOperationalAccess(value) {
+  return ["GUARDA_VIDAS", "OCUPADO", "LIVRE"].includes(normalizeAccessLevel(value));
 }
 
 function normalizeUser(data = {}) {
@@ -69,6 +73,44 @@ function normalizarIdentificadorLogin(valor) {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(readStoredUser);
 
+  const syncActiveShift = useCallback(async (currentUser) => {
+    if (!currentUser?.id || !localStorage.getItem("token")) {
+      return;
+    }
+
+    if (!isOperationalAccess(currentUser.nivelAcesso)) {
+      clearActiveShift();
+      return;
+    }
+
+    try {
+      const activeShift = await apiRequest(`/check/active?usuarioId=${encodeURIComponent(currentUser.id)}`);
+
+      if (activeShift?.postoId) {
+        saveActiveShift({
+          postoId: activeShift.postoId,
+          postoNome: activeShift.postoNome,
+          startedAt: activeShift.startedAt,
+          counters: {
+            prevencoes: activeShift.prevencoes,
+            lesoes: activeShift.lesoes,
+            queimaduras: activeShift.queimaduras,
+          },
+        });
+      } else {
+        clearActiveShift();
+      }
+    } catch {
+      // Mantem a sessao local quando a consulta de turno ativo falhar temporariamente.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      syncActiveShift(user);
+    }
+  }, [syncActiveShift, user]);
+
   const login = async ({ cpf, email, senha }) => {
     const data = await apiRequest("/auth/login", {
       method: "POST",
@@ -81,6 +123,7 @@ export function AuthProvider({ children }) {
 
     const loggedUser = persistSession(data);
     setUser(loggedUser);
+    await syncActiveShift(loggedUser);
     return loggedUser;
   };
 

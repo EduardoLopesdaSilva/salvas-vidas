@@ -12,7 +12,7 @@ export default function GerenciamentoGuardaVidas() {
     const [formulario, setFormulario] = useState({
         nomeCompleto: "",
         cpf: "",
-        nivelAcesso: "OCUPADO"
+        nivelAcesso: "GUARDA_VIDAS"
     });
 
     const carregarUsuarios = async () => {
@@ -66,7 +66,7 @@ export default function GerenciamentoGuardaVidas() {
             }
             setMostrarFormulario(false);
             setEditando(null);
-            setFormulario({ nomeCompleto: "", cpf: "", nivelAcesso: "OCUPADO" });
+            setFormulario({ nomeCompleto: "", cpf: "", nivelAcesso: "GUARDA_VIDAS" });
             carregarUsuarios();
         } catch (error) {
             setErro(error.message || "Erro ao salvar usuário");
@@ -105,7 +105,7 @@ export default function GerenciamentoGuardaVidas() {
     const cancelarEdicao = () => {
         setMostrarFormulario(false);
         setEditando(null);
-        setFormulario({ nomeCompleto: "", cpf: "", nivelAcesso: "OCUPADO" });
+        setFormulario({ nomeCompleto: "", cpf: "", nivelAcesso: "GUARDA_VIDAS" });
         setErro("");
     };
 
@@ -116,7 +116,7 @@ export default function GerenciamentoGuardaVidas() {
                     <p className="page-kicker">Administração</p>
                     <h1>Guarda-Vidas</h1>
                     <p className="page-description">
-                        Cadastre, edite e acompanhe os profissionais autorizados a acessar o sistema.
+                        Cadastre, edite e acompanhe os profissionais autorizados a acessar o sistema. A senha inicial usa os 6 primeiros digitos do CPF.
                     </p>
                 </div>
 
@@ -271,8 +271,7 @@ export default function GerenciamentoGuardaVidas() {
                                     onChange={handleChange}
                                     disabled={carregando}
                                 >
-                                    <option value="OCUPADO">Guarda-Vidas (Operacional)</option>
-                                    <option value="LIVRE">Guarda-Vidas (Livre)</option>
+                                    <option value="GUARDA_VIDAS">Guarda-Vidas</option>
                                     <option value="ADMIN">Administrador (Sargento)</option>
                                 </select>
                             </div>
